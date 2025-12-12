@@ -1,10 +1,25 @@
-import { createBrowserRouter } from "react-router-dom";
-import Login from "../pages/Login/Login";
-import Boards from "../pages/Boards/Boards";
-import BoardDetail from "../pages/BoardDetail/BoardDetail";
+import { Routes, Route } from "react-router-dom";
+import Login from "../pages/Login";
+import Register from "../pages/Register";
+import Boards from "../pages/Boards";
+import BoardDetail from "../pages/BoardDetail";
+import ProtectedRoute from "./ProtectedRoute";
+import MainLayout from "../layouts/MainLayout";
 
-export const router = createBrowserRouter([
-  { path: "/", element: <Login /> },
-  { path: "/boards", element: <Boards /> },
-  { path: "/board/:id", element: <BoardDetail /> },
-]);
+export default function AppRouter() {
+  return (
+    <Routes>
+      {/* Public Pages */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* Protected Pages */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          <Route path="/boards" element={<Boards />} />
+          <Route path="/boards/:id" element={<BoardDetail />} />
+        </Route>
+      </Route>
+    </Routes>
+  );
+}
