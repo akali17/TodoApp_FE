@@ -1,37 +1,42 @@
 import { useState } from "react";
+import useOnlineUsers from "../../hooks/useOnlineUsers";
 import axiosClient from "../../api/axiosClient";
 
 export default function BoardMembers({ board }) {
-  const [open, setOpen] = useState(false);        // open members modal
-  const [inviteOpen, setInviteOpen] = useState(false); // open invite modal
+  const [open, setOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [email, setEmail] = useState("");
+
+  const onlineUsers = useOnlineUsers(board._id);
 
   const inviteMember = async () => {
     if (!email.trim()) return;
-
     await axiosClient.post(`/boards/${board._id}/add-member`, { email });
     setEmail("");
     setInviteOpen(false);
   };
 
+  const isOnline = (userId) =>
+    onlineUsers.some((u) => u.userId === userId);
+
   return (
     <>
-      {/* --------- AVATAR STACK --------- */}
+      {/* ===== AVATAR STACK ===== */}
       <div className="flex items-center gap-2">
-        {board.members?.slice(0, 4).map(m => (
-          <img
-            key={m._id}
-            src={m.avatar || `https://ui-avatars.com/api/?name=${m.username}`}
-            className="w-8 h-8 rounded-full border -ml-2 hover:scale-105 transition"
-            title={m.username}
-          />
-        ))}
+        {board.members?.slice(0, 5).map((m) => (
+          <div key={m._id} className="relative -ml-2">
+            <img
+              src={m.avatar || `https://ui-avatars.com/api/?name=${m.username}`}
+              className="w-8 h-8 rounded-full border"
+              title={m.username}
+            />
 
-        {board.members.length > 4 && (
-          <span className="text-sm text-gray-600">
-            +{board.members.length - 4}
-          </span>
-        )}
+            {/* ONLINE DOT */}
+            {isOnline(m._id) && (
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+            )}
+          </div>
+        ))}
 
         <button
           onClick={() => setInviteOpen(true)}
@@ -48,7 +53,7 @@ export default function BoardMembers({ board }) {
         </button>
       </div>
 
-      {/* --------- MEMBERS LIST MODAL --------- */}
+      {/* ===== MEMBERS MODAL ===== */}
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white w-[400px] rounded p-6 relative">
@@ -62,7 +67,10 @@ export default function BoardMembers({ board }) {
             <h2 className="text-lg font-semibold mb-4">Board Members</h2>
 
             {board.members.map((m) => (
-              <div key={m._id} className="flex items-center justify-between mb-2 bg-gray-100 p-2 rounded">
+              <div
+                key={m._id}
+                className="flex items-center justify-between mb-2 bg-gray-100 p-2 rounded"
+              >
                 <div className="flex items-center gap-2">
                   <img
                     src={m.avatar || `https://ui-avatars.com/api/?name=${m.username}`}
@@ -71,19 +79,10 @@ export default function BoardMembers({ board }) {
                   <span>{m.username}</span>
                 </div>
 
-                {/* CANNOT remove owner */}
-                {m._id !== board.owner && (
-                  <button
-                    onClick={async () => {
-                      await axiosClient.delete(`/boards/${board._id}/remove-member`, {
-                        data: { email: m.email }
-                      });
-                      window.location.reload();
-                    }}
-                    className="text-red-500 text-sm"
-                  >
-                    Remove
-                  </button>
+                {isOnline(m._id) ? (
+                  <span className="text-green-600 text-xs">● Online</span>
+                ) : (
+                  <span className="text-gray-400 text-xs">Offline</span>
                 )}
               </div>
             ))}
@@ -91,7 +90,7 @@ export default function BoardMembers({ board }) {
         </div>
       )}
 
-      {/* --------- INVITE MODAL --------- */}
+      {/* ===== INVITE MODAL ===== */}
       {inviteOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white w-[350px] rounded p-6 relative">

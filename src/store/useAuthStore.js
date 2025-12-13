@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { loginApi, registerApi, googleLoginApi } from "../api/auth";
+import { initSocket, disconnectSocket } from "../socket/socket";
+import { useOnlineStore } from "./useOnlineStore";
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -7,19 +9,34 @@ export const useAuthStore = create((set) => ({
   loading: false,
   error: null,
 
+  // =====================
   // LOGIN
+  // =====================
   login: async (email, password) => {
     try {
       set({ loading: true, error: null });
+
       const res = await loginApi(email, password);
+      const { token, user } = res.data;
 
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("token", token);
 
-      set({
-        user: res.data.user,
-        token: res.data.token,
-        loading: false,
+      // INIT SOCKET
+      const socket = initSocket(token);
+
+      socket.on("online-users", (users) => {
+        useOnlineStore.getState().setOnlineUsers(users);
       });
+
+      socket.on("user-online", (userId) => {
+        useOnlineStore.getState().addOnlineUser(userId);
+      });
+
+      socket.on("user-offline", (userId) => {
+        useOnlineStore.getState().removeOnlineUser(userId);
+      });
+
+      set({ user, token, loading: false });
 
       return true;
     } catch (err) {
@@ -31,14 +48,15 @@ export const useAuthStore = create((set) => ({
     }
   },
 
+  // =====================
   // REGISTER
+  // =====================
   register: async (username, email, password) => {
     try {
       set({ loading: true, error: null });
-
-      const res = await registerApi(username, email, password);
-
-      return true; // đăng ký xong quay về login
+      await registerApi(username, email, password);
+      set({ loading: false });
+      return true;
     } catch (err) {
       set({
         loading: false,
@@ -48,21 +66,33 @@ export const useAuthStore = create((set) => ({
     }
   },
 
+  // =====================
   // GOOGLE LOGIN
+  // =====================
   googleLogin: async (googleToken) => {
     try {
       set({ loading: true, error: null });
 
       const res = await googleLoginApi(googleToken);
+      const { token, user } = res.data;
 
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("token", token);
 
-      set({
-        user: res.data.user,
-        token: res.data.token,
-        loading: false,
+      const socket = initSocket(token);
+
+      socket.on("online-users", (users) => {
+        useOnlineStore.getState().setOnlineUsers(users);
       });
 
+      socket.on("user-online", (userId) => {
+        useOnlineStore.getState().addOnlineUser(userId);
+      });
+
+      socket.on("user-offline", (userId) => {
+        useOnlineStore.getState().removeOnlineUser(userId);
+      });
+
+      set({ user, token, loading: false });
       return true;
     } catch (err) {
       set({ loading: false, error: "Google login failed" });
@@ -70,8 +100,13 @@ export const useAuthStore = create((set) => ({
     }
   },
 
- logout: () => {
-  localStorage.removeItem("token");
-  set({ user: null, token: null });
-}
+  // =====================
+  // LOGOUT
+  // =====================
+  logout: () => {
+    disconnectSocket();
+    localStorage.removeItem("token");
+    set({ user: null, token: null });
+    useOnlineStore.getState().setOnlineUsers([]);
+  },
 }));

@@ -1,110 +1,68 @@
-import { create } from "zustand";
-import axiosClient from "../api/axiosClient";
+import { useState } from "react";
+import { useBoardStore } from "../../store/useBoardStore";
 
-export const useBoardStore = create((set, get) => ({
+export default function BoardMembers({ board }) {
+  const [open, setOpen] = useState(false);
+  const onlineUsers = useBoardStore(state => state.onlineUsers);
 
-  board: null,
-  columns: [],
-  cards: [],
-  activity: [],
-  loading: false,
+  const isOnline = (userId) => onlineUsers.includes(userId);
 
-  /* =====================================================
-      LOAD FULL BOARD
-  ====================================================== */
-  getFullBoard: async (boardId) => {
-    try {
-      set({ loading: true });
+  return (
+    <>
+      {/* AVATAR STACK */}
+      <div className="flex items-center gap-2">
+        {board.members.map((m) => (
+          <div key={m._id} className="relative">
+            <img
+              src={m.avatar || `https://ui-avatars.com/api/?name=${m.username}`}
+              className="w-8 h-8 rounded-full border"
+            />
 
-      const res = await axiosClient.get(`/boards/${boardId}/full`);
+            {/* ONLINE DOT */}
+            {isOnline(m._id) && (
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+            )}
+          </div>
+        ))}
+      </div>
 
-      set({
-        board: res.data.board,
-        columns: res.data.columns.sort((a,b)=>a.order-b.order),
-        cards: res.data.cards.sort((a,b)=>a.order-b.order),
-        activity: res.data.activity,
-        loading: false
-      });
+      {/* VIEW MEMBERS */}
+      <button
+        onClick={() => setOpen(true)}
+        className="ml-3 px-3 py-1 bg-gray-300 rounded"
+      >
+        Members
+      </button>
 
-    } catch (err) {
-      console.error("GET FULL BOARD ERROR:", err);
-      set({ loading: false });
-    }
-  },
+      {/* MODAL */}
+      {open && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-[400px] rounded p-6 relative">
+            <button
+              className="absolute top-2 right-2 text-xl"
+              onClick={() => setOpen(false)}
+            >
+              ✕
+            </button>
 
-  /* =====================================================
-      LOCAL STATE UPDATE (Optimistic UI)
-  ====================================================== */
-  setLocalColumns: (cols) => set({ columns: cols }),
-  setLocalCards: (cards) => set({ cards }),
+            <h2 className="text-lg font-semibold mb-4">Members</h2>
 
-  setLocalColumnsAndCards: (cols, cards) =>
-    set({ columns: cols, cards: cards }),
+            {board.members.map(m => (
+              <div key={m._id} className="flex items-center gap-3 mb-2">
+                <img
+                  src={m.avatar || `https://ui-avatars.com/api/?name=${m.username}`}
+                  className="w-8 h-8 rounded-full"
+                />
+                <span>{m.username}</span>
 
-  /* =====================================================
-      REORDER COLUMNS
-  ====================================================== */
-  reorderColumns: async (boardId, reorderedColumns) => {
-    try {
-      // update UI ngay lập tức
-      set({ columns: reorderedColumns });
-
-      // gửi order lên server
-      await axiosClient.post("/columns/reorder", {
-        boardId,
-        order: reorderedColumns.map(c => c._id)
-      });
-
-    } catch (err) {
-      console.error("REORDER COLUMNS ERROR:", err);
-      await get().getFullBoard(boardId); // rollback
-    }
-  },
-
-  /* =====================================================
-      MOVE CARD BETWEEN COLUMNS
-  ====================================================== */
-  moveCard: async ({ cardId, fromColumn, toColumn, newIndex }) => {
-    try {
-      await axiosClient.post(`/cards/${cardId}/move`, {
-        fromColumn,
-        toColumn,
-        newIndex
-      });
-
-      // reload để đồng bộ order
-      await get().getFullBoard(get().board._id);
-
-    } catch (err) {
-      console.error("MOVE CARD ERROR:", err);
-    }
-  },
-
-  /* =====================================================
-      CREATE COLUMN
-  ====================================================== */
-  createColumn: async (boardId, title) => {
-    try {
-      await axiosClient.post("/columns", { boardId, title });
-      await get().getFullBoard(boardId);
-    } catch (err) {
-      console.error("CREATE COLUMN ERROR:", err);
-    }
-  },
-
-  /* =====================================================
-      CREATE CARD
-  ====================================================== */
-  createCard: async (columnId, title) => {
-    try {
-      await axiosClient.post("/cards", { columnId, title });
-
-      // reload board
-      await get().getFullBoard(get().board._id);
-
-    } catch (err) {
-      console.error("CREATE CARD ERROR:", err);
-    }
-  },
-
-}));
+                {isOnline(m._id) && (
+                  <span className="text-xs text-green-600 ml-auto">Online</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
