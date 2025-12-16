@@ -1,11 +1,11 @@
 import { Draggable } from "@hello-pangea/dnd";
 import { useState } from "react";
-import axiosClient from "../../api/axiosClient";
+import { useBoardStore } from "../../store/useBoardStore";
 import CardModal from "./CardModal";
 
 export default function CardItem({ card, index }) {
   const [open, setOpen] = useState(false);
-  const [done, setDone] = useState(card.isDone);
+  const updateCard = useBoardStore((s) => s.updateCard);
 
   // =========================
   // TOGGLE DONE (NO MODAL)
@@ -13,16 +13,15 @@ export default function CardItem({ card, index }) {
   const toggleDone = async (e) => {
     e.stopPropagation(); // ❗ rất quan trọng (không mở modal)
 
-    const newDone = !done;
-    setDone(newDone); // optimistic UI
-
+    const newDone = !card.isDone;
+    
     try {
-      await axiosClient.put(`/cards/${card._id}`, {
+      await updateCard(card._id, {
         isDone: newDone,
       });
+      console.log("✅ Card done toggled:", newDone);
     } catch (err) {
       console.error("UPDATE DONE ERROR:", err);
-      setDone(!newDone); // rollback nếu lỗi
     }
   };
 
@@ -36,14 +35,14 @@ export default function CardItem({ card, index }) {
             {...provided.dragHandleProps}
             onClick={() => setOpen(true)}
             className={`rounded p-3 border shadow cursor-pointer transition
-              ${done ? "bg-green-50 opacity-70" : "bg-white hover:bg-gray-50"}
+              ${card.isDone ? "bg-green-50 opacity-70" : "bg-white hover:bg-gray-50"}
             `}
           >
             {/* HEADER: DONE CHECKBOX + TITLE */}
             <div className="flex items-start gap-2">
               <input
                 type="checkbox"
-                checked={done}
+                checked={card.isDone}
                 onClick={toggleDone}
                 onChange={() => {}}
                 className="mt-1"
@@ -51,7 +50,7 @@ export default function CardItem({ card, index }) {
 
               <h3
                 className={`font-medium ${
-                  done ? "line-through text-gray-500" : ""
+                  card.isDone ? "line-through text-gray-500" : ""
                 }`}
               >
                 {card.title}
@@ -60,30 +59,35 @@ export default function CardItem({ card, index }) {
 
             {/* DEADLINE */}
             {card.deadline && (
-              <p className="text-xs text-gray-500 mt-1 ml-6">
+              <p className="text-xs text-gray-500 mt-2 ml-6">
                 📅 {new Date(card.deadline).toLocaleDateString()}
               </p>
             )}
 
             {/* MEMBERS */}
             {card.members?.length > 0 && (
-              <div className="flex mt-2 ml-6">
-                {card.members.slice(0, 3).map((m) => (
+              <div className="flex items-center gap-1 mt-2 ml-6">
+                {card.members.slice(0, 3).map((m, idx) => (
                   <img
                     key={m._id}
                     src={
                       m.avatar ||
                       `https://ui-avatars.com/api/?name=${m.username}`
                     }
-                    className="w-6 h-6 rounded-full border -ml-1"
+                    className="w-6 h-6 rounded-full border-2 border-white"
+                    style={{ marginLeft: idx > 0 ? '-8px' : '0' }}
                     title={m.username}
                   />
                 ))}
 
                 {card.members.length > 3 && (
-                  <span className="text-xs text-gray-600 ml-1">
+                  <div 
+                    className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-semibold text-gray-600"
+                    style={{ marginLeft: '-8px' }}
+                    title={card.members.slice(3).map(m => m.username).join(', ')}
+                  >
                     +{card.members.length - 3}
-                  </span>
+                  </div>
                 )}
               </div>
             )}

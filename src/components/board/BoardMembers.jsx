@@ -1,59 +1,91 @@
-import { useState } from "react";
-import useOnlineUsers from "../../hooks/useOnlineUsers";
+import { useState, useEffect } from "react";
 import axiosClient from "../../api/axiosClient";
+import useOnlineUsers from "../../hooks/useOnlineUsers";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export default function BoardMembers({ board }) {
   const [open, setOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [email, setEmail] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitingEmail, setInvitingEmail] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState("");
 
-  const onlineUsers = useOnlineUsers(board._id);
+  // Use useAuthStore hook to get user (will update when user changes)
+  const user = useAuthStore((state) => state.user);
+  const onlineUsers = useOnlineUsers();
 
-  const inviteMember = async () => {
-    if (!email.trim()) return;
-    await axiosClient.post(`/boards/${board._id}/add-member`, { email });
-    setEmail("");
-    setInviteOpen(false);
+  const isOnline = (userId) => onlineUsers.includes(userId);
+
+  // Compare using String to handle both object and string IDs
+  const isOwner = String(user?._id) === String(board.owner?._id || board.owner);
+
+  const sendEmailInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    try {
+      setInvitingEmail(true);
+      const res = await axiosClient.post(`/boards/${board._id}/invite`, { 
+        email: inviteEmail 
+      });
+      setInviteMessage(res.data.message || "Invite sent!");
+      setInviteEmail("");
+      setTimeout(() => {
+        setInviteMessage("");
+        setInviteOpen(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Invite error:", err);
+      alert(err.response?.data?.message || "Failed to send invite");
+    } finally {
+      setInvitingEmail(false);
+    }
   };
 
-  const isOnline = (userId) =>
-    onlineUsers.some((u) => u.userId === userId);
+  const removeMember = async (userId) => {
+    if (!window.confirm("Are you sure you want to remove this member?")) return;
+    try {
+      await axiosClient.post(`/boards/${board._id}/remove-member`, { userId });
+    } catch (err) {
+      console.error("Remove member error:", err);
+      alert(err.response?.data?.message || "Failed to remove member");
+    }
+  };
 
   return (
     <>
-      {/* ===== AVATAR STACK ===== */}
+      {/* ===== HEADER MEMBERS ===== */}
       <div className="flex items-center gap-2">
-        {board.members?.slice(0, 5).map((m) => (
-          <div key={m._id} className="relative -ml-2">
-            <img
-              src={m.avatar || `https://ui-avatars.com/api/?name=${m.username}`}
-              className="w-8 h-8 rounded-full border"
-              title={m.username}
-            />
 
-            {/* ONLINE DOT */}
-            {isOnline(m._id) && (
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
-            )}
-          </div>
-        ))}
-
+        {/* ➕ ADD MEMBER BUTTON */}
         <button
           onClick={() => setInviteOpen(true)}
-          className="ml-3 px-3 py-1 bg-blue-600 text-white rounded"
+          className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700"
+          title="Add member"
         >
-          + Invite
+          +
         </button>
 
-        <button
+        {/* AVATARS */}
+        <div
+          className="flex items-center gap-1 cursor-pointer"
           onClick={() => setOpen(true)}
-          className="px-3 py-1 bg-gray-300 rounded"
         >
-          View Members
-        </button>
+          {board.members?.slice(0, 5).map((m) => (
+            <div key={m._id} className="relative">
+              <img
+                src={m.avatar || `https://ui-avatars.com/api/?name=${m.username}`}
+                className="w-8 h-8 rounded-full border"
+              />
+
+              <span
+                className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border
+                ${isOnline(m._id) ? "bg-green-500" : "bg-gray-400"}`}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* ===== MEMBERS MODAL ===== */}
+      {/* ===== MEMBERS LIST MODAL ===== */}
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white w-[400px] rounded p-6 relative">
@@ -64,28 +96,49 @@ export default function BoardMembers({ board }) {
               ✕
             </button>
 
-            <h2 className="text-lg font-semibold mb-4">Board Members</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              Board Members ({board.members.length})
+            </h2>
 
-            {board.members.map((m) => (
-              <div
-                key={m._id}
-                className="flex items-center justify-between mb-2 bg-gray-100 p-2 rounded"
-              >
-                <div className="flex items-center gap-2">
+            {board.members.map((m) => {
+              const isBoardOwner = String(m._id) === String(board.owner?._id || board.owner);
+              return (
+                <div
+                  key={m._id}
+                  className="flex items-center gap-3 mb-2 p-2 rounded hover:bg-gray-50"
+                >
                   <img
                     src={m.avatar || `https://ui-avatars.com/api/?name=${m.username}`}
                     className="w-8 h-8 rounded-full"
                   />
-                  <span>{m.username}</span>
-                </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span>{m.username}</span>
+                      {isBoardOwner && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Owner</span>
+                      )}
+                    </div>
+                  </div>
 
-                {isOnline(m._id) ? (
-                  <span className="text-green-600 text-xs">● Online</span>
-                ) : (
-                  <span className="text-gray-400 text-xs">Offline</span>
-                )}
-              </div>
-            ))}
+                  <span className={`text-xs ${isOnline(m._id)
+                    ? "text-green-600"
+                    : "text-gray-400"}`}>
+                    {isOnline(m._id) ? "Online" : "Offline"}
+                  </span>
+
+                  {/* Remove button - only for owner and not for board owner */}
+                  {isOwner && !isBoardOwner && (
+                    <button
+                      onClick={() => removeMember(m._id)}
+                      className="ml-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                      title="Remove member"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -93,28 +146,46 @@ export default function BoardMembers({ board }) {
       {/* ===== INVITE MODAL ===== */}
       {inviteOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[350px] rounded p-6 relative">
+          <div className="bg-white w-[400px] rounded p-6 relative">
             <button
               className="absolute top-2 right-2 text-xl"
-              onClick={() => setInviteOpen(false)}
+              onClick={() => {
+                setInviteOpen(false);
+                setInviteMessage("");
+              }}
             >
               ✕
             </button>
 
             <h2 className="text-lg font-semibold mb-4">Invite Member</h2>
 
-            <input
-              className="border p-2 rounded w-full mb-4"
-              placeholder="Enter email..."
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            {inviteMessage && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded mb-4">
+                ✅ {inviteMessage}
+              </div>
+            )}
 
+            <input
+              type="email"
+              placeholder="Enter email address"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && inviteEmail.trim() && !invitingEmail) {
+                  sendEmailInvite();
+                }
+              }}
+              className="border p-2 rounded w-full mb-4"
+            />
+            <p className="text-sm text-gray-600 mb-4">
+              They will receive a confirmation email and can join the board by clicking the link.
+            </p>
             <button
-              onClick={inviteMember}
-              className="bg-blue-600 text-white w-full py-2 rounded"
+              onClick={sendEmailInvite}
+              disabled={!inviteEmail.trim() || invitingEmail}
+              className="bg-blue-600 text-white w-full py-2 rounded disabled:bg-gray-400 hover:bg-blue-700"
             >
-              Invite
+              {invitingEmail ? "Sending..." : "Send Invite"}
             </button>
           </div>
         </div>

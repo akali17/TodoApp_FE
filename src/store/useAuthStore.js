@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { loginApi, registerApi, googleLoginApi } from "../api/auth";
-import { initSocket, disconnectSocket } from "../socket/socket";
+import { loginApi, registerApi, googleLoginApi, getUserInfoApi } from "../api/auth";
+import { initSocket, disconnectSocket } from "../socket";
 import { useOnlineStore } from "./useOnlineStore";
 
 export const useAuthStore = create((set) => ({
@@ -8,6 +8,31 @@ export const useAuthStore = create((set) => ({
   token: localStorage.getItem("token") || null,
   loading: false,
   error: null,
+
+  // =====================
+  // SET USER (for cached token)
+  // =====================
+  setUser: (user) => {
+    set({ user });
+    // Also persist to localStorage when user is updated
+    localStorage.setItem("user", JSON.stringify(user));
+  },
+
+  // =====================
+  // FETCH USER INFO (restore user from token)
+  // =====================
+  fetchUserInfo: async () => {
+    try {
+      const res = await getUserInfoApi();
+      if (res.data.user) {
+        set({ user: res.data.user });
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+    } catch (err) {
+      console.error("Failed to fetch user info:", err);
+      set({ user: null });
+    }
+  },
 
   // =====================
   // LOGIN
@@ -20,24 +45,17 @@ export const useAuthStore = create((set) => ({
       const { token, user } = res.data;
 
       localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
       // INIT SOCKET
       const socket = initSocket(token);
 
+      // LISTEN ONLINE USERS
       socket.on("online-users", (users) => {
         useOnlineStore.getState().setOnlineUsers(users);
       });
 
-      socket.on("user-online", (userId) => {
-        useOnlineStore.getState().addOnlineUser(userId);
-      });
-
-      socket.on("user-offline", (userId) => {
-        useOnlineStore.getState().removeOnlineUser(userId);
-      });
-
       set({ user, token, loading: false });
-
       return true;
     } catch (err) {
       set({
@@ -77,19 +95,12 @@ export const useAuthStore = create((set) => ({
       const { token, user } = res.data;
 
       localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
       const socket = initSocket(token);
 
       socket.on("online-users", (users) => {
         useOnlineStore.getState().setOnlineUsers(users);
-      });
-
-      socket.on("user-online", (userId) => {
-        useOnlineStore.getState().addOnlineUser(userId);
-      });
-
-      socket.on("user-offline", (userId) => {
-        useOnlineStore.getState().removeOnlineUser(userId);
       });
 
       set({ user, token, loading: false });
@@ -106,6 +117,7 @@ export const useAuthStore = create((set) => ({
   logout: () => {
     disconnectSocket();
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     set({ user: null, token: null });
     useOnlineStore.getState().setOnlineUsers([]);
   },

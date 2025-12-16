@@ -6,16 +6,12 @@ export default function AddCard({ columnId }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
 
-  const { board, getFullBoard } = useBoardStore();
+  const { createCard } = useBoardStore();
 
   const create = async () => {
-    await axiosClient.post("/cards", {
-      title,
-      columnId,
-      boardId: board._id,
-    });
-
-    await getFullBoard(board._id);
+    if (!title.trim()) return;
+    
+    await createCard(columnId, title);
     setTitle("");
     setOpen(false);
   };
@@ -23,10 +19,18 @@ export default function AddCard({ columnId }) {
   return open ? (
     <div className="mt-2">
       <input
+        autoFocus
         className="border w-full p-2 rounded"
         placeholder="Card title..."
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") create();
+          if (e.key === "Escape") {
+            setOpen(false);
+            setTitle("");
+          }
+        }}
       />
       <button
         onClick={create}
