@@ -10,11 +10,18 @@ export default function Register() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState(null);
+  const [success, setSuccess] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const ok = await register(username, email, password);
-    if (ok) navigate("/login");
+    const result = await register(username, email, password);
+    if (result) {
+      setSuccess("Registration successful! Please check your email to verify your account.");
+      // Redirect to login after 5 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 5000);
+    }
   };
 
   return (
@@ -44,6 +51,14 @@ export default function Register() {
           {error && (
             <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded animate-shake">
               <p className="text-red-700 text-sm font-medium">{error}</p>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded">
+              <p className="text-green-700 text-sm font-medium">✅ {success}</p>
+              <p className="text-green-600 text-xs mt-1">Redirecting to login...</p>
             </div>
           )}
 

@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { getMyBoards, createBoardApi } from "../api/board";
 import { useAuthStore } from "../store/useAuthStore";
 import PageContainer from "../components/common/PageContainer";
+import BoardModal from "../components/common/BoardModal";
 
 export default function Boards() {
   const { token } = useAuthStore();
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newBoard, setNewBoard] = useState("");
+  const [newBoardDesc, setNewBoardDesc] = useState("");
+  const [editingBoard, setEditingBoard] = useState(null);
 
   useEffect(() => {
     fetchBoards();
@@ -27,9 +30,10 @@ export default function Boards() {
   const createBoard = async () => {
     if (!newBoard.trim()) return;
 
-    const res = await createBoardApi(newBoard, token);
+    const res = await createBoardApi(newBoard, newBoardDesc, token);
     setBoards([...boards, res.data.board]);
     setNewBoard("");
+    setNewBoardDesc("");
   };
 
   return (
@@ -37,16 +41,25 @@ export default function Boards() {
 
         {/* Create Board Input */}
         <div className="flex gap-2 mb-6">
-          <input
-            className="border-2 rounded-xl p-3 flex-1 max-w-lg focus:outline-none focus:border-blue-500 bg-white shadow-sm"
-            placeholder="New board title..."
-            value={newBoard}
-            onChange={(e) => setNewBoard(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && createBoard()}
-          />
+          <div className="flex-1 max-w-lg">
+            <input
+              className="border-2 rounded-xl p-3 w-full focus:outline-none focus:border-blue-500 bg-white shadow-sm mb-2"
+              placeholder="New board title..."
+              value={newBoard}
+              onChange={(e) => setNewBoard(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && createBoard()}
+            />
+            <textarea
+              className="border-2 rounded-xl p-3 w-full focus:outline-none focus:border-blue-500 bg-white shadow-sm"
+              placeholder="Board description (optional)..."
+              value={newBoardDesc}
+              onChange={(e) => setNewBoardDesc(e.target.value)}
+              rows={2}
+            />
+          </div>
           <button 
             onClick={createBoard}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition font-semibold shadow"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition font-semibold shadow h-fit"
           >
             + Create
           </button>
@@ -64,16 +77,37 @@ export default function Boards() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {boards.map((b) => (
-              <a
-                key={b._id}
-                href={`/boards/${b._id}`}
-                className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-lg transition border border-gray-200 hover:border-blue-300 group"
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700">{b.title}</h3>
-                <p className="text-gray-600 text-sm">{b.description || "No description"}</p>
-              </a>
+              <div key={b._id}>
+                <a
+                  href={`/boards/${b._id}`}
+                  className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-lg transition border border-gray-200 hover:border-blue-300 group block"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700">{b.title}</h3>
+                  <p className="text-gray-600 text-sm">{b.description || "No description"}</p>
+                </a>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setEditingBoard(b);
+                  }}
+                  className="mt-2 w-full text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
+                >
+                  ✏️ Edit
+                </button>
+              </div>
             ))}
           </div>
+        )}
+        
+        {/* EDIT BOARD MODAL */}
+        {editingBoard && (
+          <BoardModal
+            board={editingBoard}
+            onClose={() => setEditingBoard(null)}
+            onUpdate={(updatedBoard) => {
+              setBoards(boards.map(b => b._id === updatedBoard._id ? updatedBoard : b));
+            }}
+          />
         )}
     </PageContainer>
   );

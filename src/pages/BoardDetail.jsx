@@ -127,7 +127,7 @@ export default function BoardDetail() {
   
 
   return (
-    <PageContainer title="Board">
+    <PageContainer title="">
       {/* BOARD HEADER */}
       <header className="bg-white rounded-xl shadow-sm border p-4 mb-4 flex items-center justify-between">
         {!editingTitle ? (
@@ -190,7 +190,7 @@ export default function BoardDetail() {
         </div>
 
         {/* ACTIVITY PANEL - FIXED */}
-        <div className="w-80 flex-shrink-0">
+        <div className="flex-shrink-0 flex">
           <ActivityPanel activity={activity} />
         </div>
       </div>

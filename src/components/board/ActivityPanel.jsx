@@ -8,10 +8,9 @@ export default function ActivityPanel({ activity: propActivity }) {
 
   return (
     <div
-      className={
-        (collapsed ? "w-10 " : "w-full ") +
-        "bg-white border rounded-xl shadow-sm p-3 md:p-4 transition-all duration-300 flex flex-col h-[calc(100vh-200px)]"
-      }
+      className={`${
+        collapsed ? "w-14" : "w-80"
+      } bg-white border rounded-xl shadow-sm p-3 md:p-4 transition-all duration-300 ease-in-out flex flex-col h-[calc(100vh-200px)] flex-shrink-0`}
     >
       {/* Header */}
       <div className="flex items-center justify-between flex-shrink-0">

@@ -11,13 +11,28 @@ export default function BoardMembers({ board }) {
   const [inviteMessage, setInviteMessage] = useState("");
 
   // Use useAuthStore hook to get user (will update when user changes)
-  const user = useAuthStore((state) => state.user);
+  let user = useAuthStore((state) => state.user);
   const onlineUsers = useOnlineUsers();
+
+  // Fallback: try to get user from localStorage if not in store
+  if (!user) {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        user = JSON.parse(storedUser);
+      }
+    } catch (err) {
+      console.error("Failed to parse stored user:", err);
+    }
+  }
 
   const isOnline = (userId) => onlineUsers.includes(userId);
 
   // Compare using String to handle both object and string IDs
-  const isOwner = String(user?._id) === String(board.owner?._id || board.owner);
+  // Handle both _id and id fields from API
+  const userID = user?._id || user?.id;
+  const boardOwnerID = board.owner?._id || board.owner?.id || board.owner;
+  const isOwner = userID && boardOwnerID && String(userID) === String(boardOwnerID);
 
   const sendEmailInvite = async () => {
     if (!inviteEmail.trim()) return;

@@ -13,4 +13,4 @@ export const getUserInfoApi = () =>
   axiosClient.get(`${API}/me`);
 
 export const googleLoginApi = (token) =>
-  axios.post(`${API}/google`, { token });
+  axios.post(`${API}/google-login`, { token });

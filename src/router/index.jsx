@@ -5,9 +5,11 @@ import Register from "../pages/Register";
 import Boards from "../pages/Boards";
 import BoardDetail from "../pages/BoardDetail";
 import Settings from "../pages/Settings";
+import Statistics from "../pages/Statistics";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import AcceptInvite from "../pages/AcceptInvite";
+import VerifyEmail from "../pages/VerifyEmail";
 
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
@@ -57,6 +59,15 @@ export default function AppRouter() {
       />
 
       <Route
+        path="/verify-email"
+        element={
+          <PublicRoute>
+            <VerifyEmail />
+          </PublicRoute>
+        }
+      />
+
+      <Route
         path="/accept-invite"
         element={<AcceptInvite />}
       />
@@ -85,6 +96,15 @@ export default function AppRouter() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/statistics"
+        element={
+          <ProtectedRoute>
+            <Statistics />
           </ProtectedRoute>
         }
       />

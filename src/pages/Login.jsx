@@ -1,34 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import {jwtDecode} from "jwt-decode";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNavigate, Link } from "react-router-dom";
-
+import axiosClient from "../api/axiosClient";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, loading, error } = useAuthStore();
+  const { login, loading, error, pendingEmail: storePendingEmail } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [pendingEmail, setPendingEmail] = useState("");
+
+  // Update pendingEmail when store changes
+  useEffect(() => {
+    if (storePendingEmail) {
+      setPendingEmail(storePendingEmail);
+    }
+  }, [storePendingEmail]);
 
   // --- LOGIN NORMAL ---
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setPendingEmail("");
+    setResendMessage("");
     const ok = await login(email, password);
-    if (ok) navigate("/boards");
+    if (ok) {
+      navigate("/boards");
+    }
+  };
+
+  // Resend verification email
+  const handleResendVerification = async () => {
+    if (!pendingEmail) return;
+    try {
+      setResendLoading(true);
+      const res = await axiosClient.post("/users/resend-verification", { 
+        email: pendingEmail 
+      });
+      setResendMessage("✅ Verification email sent! Check your inbox.");
+    } catch (err) {
+      setResendMessage("❌ " + (err.response?.data?.message || "Failed to resend email"));
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   // --- LOGIN GOOGLE ---
   const handleGoogleSuccess = async (response) => {
     try {
       const cred = response.credential;
-      const userData = jwtDecode(cred); 
-      // Backend handles Google login via POST
-      navigate("/boards");
+      const ok = await useAuthStore.getState().googleLogin(cred);
+      if (ok) {
+        navigate("/boards");
+      }
     } catch (err) {
-      console.error("Google Login decode error:", err);
+      console.error("Google Login error:", err);
     }
   };
 
@@ -57,8 +88,32 @@ export default function Login() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded animate-shake">
-              <p className="text-red-700 text-sm font-medium">{error}</p>
+            <div className="mb-6">
+              <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded animate-shake">
+                <p className="text-red-700 text-sm font-medium">{error}</p>
+                {error.includes("verify your email") && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-red-600 text-xs">
+                      📧 Check your email inbox for a verification link
+                    </p>
+                    {pendingEmail && (
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={resendLoading}
+                        className="w-full text-sm bg-red-100 hover:bg-red-200 text-red-700 py-2 px-3 rounded font-medium transition disabled:bg-gray-200"
+                      >
+                        {resendLoading ? "Sending..." : "Resend Verification Email"}
+                      </button>
+                    )}
+                    {resendMessage && (
+                      <p className={`text-xs ${resendMessage.includes("✅") ? "text-green-600" : "text-red-600"}`}>
+                        {resendMessage}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

@@ -8,6 +8,7 @@ export const useAuthStore = create((set) => ({
   token: localStorage.getItem("token") || null,
   loading: false,
   error: null,
+  pendingEmail: null,
 
   // =====================
   // SET USER (for cached token)
@@ -58,10 +59,22 @@ export const useAuthStore = create((set) => ({
       set({ user, token, loading: false });
       return true;
     } catch (err) {
-      set({
-        loading: false,
-        error: err.response?.data?.message || "Login failed",
-      });
+      const errorMessage = err.response?.data?.message || "Login failed";
+      const errorCode = err.response?.data?.code;
+      
+      // Store pending email for verification if needed
+      if (errorCode === "EMAIL_NOT_VERIFIED" && err.response?.data?.email) {
+        set({ 
+          loading: false,
+          error: errorMessage,
+          pendingEmail: err.response.data.email
+        });
+      } else {
+        set({
+          loading: false,
+          error: errorMessage,
+        });
+      }
       return false;
     }
   },

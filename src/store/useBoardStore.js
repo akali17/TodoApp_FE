@@ -50,6 +50,7 @@ export const useBoardStore = create((set, get) => ({
     socket.off("column:deleted");
     socket.off("columns:reordered");
     socket.off("cards:reordered");
+    socket.off("activity:updated");
 
     // ====== BOARD EVENTS ======
     socket.on("board:titleUpdated", ({ title }) => {
@@ -151,6 +152,13 @@ export const useBoardStore = create((set, get) => ({
           return updated || c;
         })
       }));
+    });
+
+    socket.on("activity:updated", ({ activity }) => {
+      console.log("🔥 SOCKET activity:updated", activity);
+      set({
+        activity: activity || []
+      });
     });
   },
 
@@ -269,9 +277,10 @@ export const useBoardStore = create((set, get) => ({
       UPDATE BOARD TITLE
   ====================================================== */
   updateBoardTitle: async (boardId, title) => {
+    const previousBoard = get().board;
+    
     try {
       // Optimistic update
-      const oldTitle = get().board?.title;
       set((state) => ({
         board: { ...state.board, title },
       }));
@@ -283,9 +292,9 @@ export const useBoardStore = create((set, get) => ({
     } catch (err) {
       console.error("UPDATE BOARD ERROR:", err);
       // Rollback on error
-      set((state) => ({
-        board: { ...state.board, title: oldTitle },
-      }));
+      set({
+        board: previousBoard,
+      });
     }
   },
 
