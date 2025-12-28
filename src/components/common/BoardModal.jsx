@@ -10,6 +10,18 @@ export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft
   const [loading, setLoading] = useState(false);
   const { user } = useAuthStore();
 
+  // Determine ownership whether `board.owner` is an id or populated object
+  const isOwner = (() => {
+    try {
+      if (board?.owner && typeof board.owner === "object" && board.owner._id) {
+        return String(board.owner._id) === String(user?._id);
+      }
+      return String(board?.owner) === String(user?._id);
+    } catch {
+      return false;
+    }
+  })();
+
   const handleUpdate = async () => {
     if (!formData.title.trim()) {
       alert("Title is required");
@@ -33,7 +45,7 @@ export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft
   };
 
   const handleDeleteBoard = async () => {
-    if (!user || String(board.owner) !== String(user._id)) return;
+    if (!user || !isOwner) return;
     const confirm = window.confirm(`Delete board "${board.title}"? This action cannot be undone.`);
     if (!confirm) return;
     try {
@@ -50,7 +62,7 @@ export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft
   };
 
   const handleLeaveBoard = async () => {
-    if (!user || String(board.owner) === String(user._id)) return;
+    if (!user || isOwner) return; // owner cannot leave
     const confirm = window.confirm(`Leave board "${board.title}"?`);
     if (!confirm) return;
     try {
@@ -104,7 +116,7 @@ export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft
         <div className="flex gap-2 justify-between items-center">
           {/* Danger actions */}
           <div className="flex gap-2">
-            {user && String(board.owner) === String(user._id) ? (
+            {user && isOwner ? (
               <button
                 onClick={handleDeleteBoard}
                 className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
