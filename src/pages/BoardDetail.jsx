@@ -84,8 +84,9 @@ export default function BoardDetail() {
     useBoardStore.getState().initBoardSocket(socket);
 
     // Listen for board deletion
-    const handleBoardDeleted = ({ boardId, message }) => {
-      showToast("This board has been deleted", 'warning', 4000);
+    const handleBoardDeleted = ({ boardId, boardName, message }) => {
+      const displayMessage = boardName ? `${boardName} has been deleted` : "This board has been deleted";
+      showToast(displayMessage, 'warning', 4000);
       setTimeout(() => {
         navigate("/boards");
       }, 1500);
@@ -108,6 +109,7 @@ export default function BoardDetail() {
     socket.on("member:removed", handleMemberRemoved);
 
     return () => {
+      socket.off("board:deleted", handleBoardDeleted);
       socket.off("member:removed", handleMemberRemoved);
     };
   };
