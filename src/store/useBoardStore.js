@@ -86,7 +86,7 @@ export const useBoardStore = create((set, get) => ({
       });
     });
 
-    socket.on("member:joined", ({ boardId, userId, username }) => {
+    socket.on("member:joined", ({ boardId, userId, username, email }) => {
       console.log("🔥 SOCKET member:joined", { boardId, userId, username });
       set((state) => {
         // Add new member to board if not already there
@@ -97,7 +97,7 @@ export const useBoardStore = create((set, get) => ({
         
         const updatedBoard = {
           ...state.board,
-          members: [...state.board.members, { _id: userId, username }],
+          members: [...state.board.members, { _id: userId, username, email }],
         };
         return { board: updatedBoard };
       });
