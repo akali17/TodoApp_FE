@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { getSocket, waitForSocket } from "../socket";
+import { showToast } from "../utils/toast";
 
 import { useBoardStore } from "../store/useBoardStore";
+import { useAuthStore } from "../store/useAuthStore";
 import ColumnItem from "../components/board/ColumnItem";
 import AddColumn from "../components/board/AddColumn";
 import ActivityPanel from "../components/board/ActivityPanel";
@@ -12,6 +14,8 @@ import PageContainer from "../components/common/PageContainer";
 
 export default function BoardDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   const {
     board,
@@ -46,6 +50,24 @@ export default function BoardDetail() {
     
     // Initialize socket listeners
     useBoardStore.getState().initBoardSocket(socket);
+
+    // Listen for being removed from board
+    const handleMemberRemoved = ({ userId, boardId }) => {
+      if (user && String(userId) === String(user._id)) {
+        // Current user was removed
+        const boardTitle = board?.title || 'this board';
+        showToast(`You have been removed from board "${boardTitle}"`, 'warning', 5000);
+        setTimeout(() => {
+          navigate("/boards");
+        }, 1000);
+      }
+    };
+
+    socket.on("member:removed", handleMemberRemoved);
+
+    return () => {
+      socket.off("member:removed", handleMemberRemoved);
+    };
   };
 
   setupSocket();
@@ -57,7 +79,7 @@ export default function BoardDetail() {
       socket.emit("leave-board", `board:${id}`);
     }
   };
-}, [id, getFullBoard]);
+}, [id, getFullBoard, user, board?.title, navigate]);
 
 
   if (loading || !board) {
