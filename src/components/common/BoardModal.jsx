@@ -21,7 +21,12 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted
     }
   })();
 
-  const currentUserId = storeUser?._id || storedUser?._id || null;
+  // Extract user ID with explicit fallback
+  const currentUserId = storeUser && storeUser._id 
+    ? storeUser._id 
+    : storedUser && storedUser._id 
+    ? storedUser._id 
+    : null;
   const ownerId = (board?.owner && typeof board.owner === "object" && board.owner._id)
     ? board.owner._id
     : board?.owner;
