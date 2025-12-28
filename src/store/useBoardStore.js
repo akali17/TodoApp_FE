@@ -41,6 +41,9 @@ export const useBoardStore = create((set, get) => ({
     // Cleanup old listeners
     socket.off("board:titleUpdated");
     socket.off("member:removed");
+    socket.off("member:joined");
+    socket.off("user:joined");
+    socket.off("user:left");
     socket.off("card:updated");
     socket.off("card:moved");
     socket.off("card:created");
@@ -72,6 +75,33 @@ export const useBoardStore = create((set, get) => ({
         };
         return { board: updatedBoard };
       });
+    });
+
+    socket.on("member:joined", ({ boardId, userId, username }) => {
+      console.log("🔥 SOCKET member:joined", { boardId, userId, username });
+      set((state) => {
+        // Add new member to board if not already there
+        const alreadyExists = state.board.members.some(
+          (m) => String(m._id) === String(userId)
+        );
+        if (alreadyExists) return { board: state.board };
+        
+        const updatedBoard = {
+          ...state.board,
+          members: [...state.board.members, { _id: userId, username }],
+        };
+        return { board: updatedBoard };
+      });
+    });
+
+    socket.on("user:joined", ({ userId, onlineUsers }) => {
+      console.log("🔥 SOCKET user:joined", { userId, onlineUsers });
+      // Update online users list (handled by useOnlineUsers hook)
+    });
+
+    socket.on("user:left", ({ userId, onlineUsers }) => {
+      console.log("🔥 SOCKET user:left", { userId, onlineUsers });
+      // Update online users list (handled by useOnlineUsers hook)
     });
 
     // ====== CARD EVENTS ======
