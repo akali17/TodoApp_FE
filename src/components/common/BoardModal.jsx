@@ -1,12 +1,14 @@
 import { useState } from "react";
 import axiosClient from "../../api/axiosClient";
+import { useAuthStore } from "../../store/useAuthStore";
 
-export default function BoardModal({ board, onClose, onUpdate }) {
+export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft }) {
   const [formData, setFormData] = useState({
     title: board?.title || "",
     description: board?.description || "",
   });
   const [loading, setLoading] = useState(false);
+  const { user } = useAuthStore();
 
   const handleUpdate = async () => {
     if (!formData.title.trim()) {
@@ -25,6 +27,40 @@ export default function BoardModal({ board, onClose, onUpdate }) {
     } catch (err) {
       console.error("Update board error:", err);
       alert(err.response?.data?.message || "Failed to update board");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteBoard = async () => {
+    if (!user || String(board.owner) !== String(user._id)) return;
+    const confirm = window.confirm(`Delete board "${board.title}"? This action cannot be undone.`);
+    if (!confirm) return;
+    try {
+      setLoading(true);
+      await axiosClient.delete(`/boards/${board._id}`);
+      if (typeof onDeleted === "function") onDeleted(board._id);
+      onClose();
+    } catch (err) {
+      console.error("Delete board error:", err);
+      alert(err.response?.data?.message || "Failed to delete board");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLeaveBoard = async () => {
+    if (!user || String(board.owner) === String(user._id)) return;
+    const confirm = window.confirm(`Leave board "${board.title}"?`);
+    if (!confirm) return;
+    try {
+      setLoading(true);
+      await axiosClient.post(`/boards/${board._id}/leave`);
+      if (typeof onLeft === "function") onLeft(board._id);
+      onClose();
+    } catch (err) {
+      console.error("Leave board error:", err);
+      alert(err.response?.data?.message || "Failed to leave board");
     } finally {
       setLoading(false);
     }
@@ -65,7 +101,30 @@ export default function BoardModal({ board, onClose, onUpdate }) {
         />
 
         {/* BUTTONS */}
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 justify-between items-center">
+          {/* Danger actions */}
+          <div className="flex gap-2">
+            {user && String(board.owner) === String(user._id) ? (
+              <button
+                onClick={handleDeleteBoard}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                disabled={loading}
+                title="Delete this board (owner only)"
+              >
+                Delete Board
+              </button>
+            ) : (
+              <button
+                onClick={handleLeaveBoard}
+                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+                disabled={loading}
+                title="Leave this board"
+              >
+                Leave Board
+              </button>
+            )}
+          </div>
+
           <button
             onClick={onClose}
             className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50"

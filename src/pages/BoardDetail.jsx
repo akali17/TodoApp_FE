@@ -229,28 +229,6 @@ export default function BoardDetail() {
 
         <div className="flex gap-3 items-center">
           <BoardMembers board={board} />
-          
-          {/* Delete Board Button (Owner Only) */}
-          {user && board.owner._id === user._id && (
-            <button
-              onClick={handleDeleteBoard}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition"
-              title="Delete this board (owner only)"
-            >
-              Delete Board
-            </button>
-          )}
-          
-          {/* Leave Board Button (Members) */}
-          {user && board.owner._id !== user._id && (
-            <button
-              onClick={handleLeaveBoard}
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition"
-              title="Leave this board"
-            >
-              Leave Board
-            </button>
-          )}
         </div>
       </header>
 
