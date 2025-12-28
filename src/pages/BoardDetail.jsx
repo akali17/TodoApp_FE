@@ -34,7 +34,20 @@ export default function BoardDetail() {
   const [title, setTitle] = useState("");
 
  useEffect(() => {
-  getFullBoard(id);
+  const loadBoard = async () => {
+    const result = await getFullBoard(id);
+    
+    // Handle access denied
+    if (!result.success && result.status === 403) {
+      showToast("You don't have access to this board", 'error', 4000);
+      setTimeout(() => {
+        navigate("/boards");
+      }, 1500);
+      return;
+    }
+  };
+
+  loadBoard();
 
   // Wait for socket to be initialized
   const setupSocket = async () => {

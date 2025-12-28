@@ -26,9 +26,18 @@ export const useBoardStore = create((set, get) => ({
         loading: false
       });
 
+      return { success: true };
+
     } catch (err) {
       console.error("GET FULL BOARD ERROR:", err);
       set({ loading: false });
+      
+      // Return error info for redirect handling
+      return { 
+        success: false, 
+        status: err.response?.status,
+        message: err.response?.data?.message || err.message 
+      };
     }
   },
 
