@@ -3,6 +3,7 @@ import { getMyBoards, createBoardApi } from "../api/board";
 import { useAuthStore } from "../store/useAuthStore";
 import PageContainer from "../components/common/PageContainer";
 import BoardModal from "../components/common/BoardModal";
+import { initSocket, getSocket } from "../socket";
 
 export default function Boards() {
   const { token } = useAuthStore();
@@ -14,6 +15,33 @@ export default function Boards() {
 
   useEffect(() => {
     fetchBoards();
+
+    // Initialize socket and listen for My Boards changes
+    const s = initSocket(useAuthStore.getState().token);
+    const socket = s || getSocket();
+    if (socket) {
+      socket.off("myBoards:added");
+      socket.off("myBoards:removed");
+
+      socket.on("myBoards:added", ({ board }) => {
+        setBoards((prev) => {
+          const exists = prev.some((b) => String(b._id) === String(board._id));
+          return exists ? prev : [...prev, board];
+        });
+      });
+
+      socket.on("myBoards:removed", ({ boardId }) => {
+        setBoards((prev) => prev.filter((b) => String(b._id) !== String(boardId)));
+      });
+    }
+
+    return () => {
+      const sock = getSocket();
+      if (sock) {
+        sock.off("myBoards:added");
+        sock.off("myBoards:removed");
+      }
+    };
   }, []);
 
   const fetchBoards = async () => {
