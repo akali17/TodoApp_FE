@@ -167,20 +167,20 @@ export default function BoardMembers({ board }) {
               onClick={() => {
                 setInviteOpen(false);
                 setInviteMessage("");
-                setInviteLink("");
               }}
             >
               ✕
             </button>
 
-            <h
+            <h2 className="text-lg font-semibold mb-4">Invite Member</h2>
+
             {inviteMessage && (
               <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded mb-4">
                 ✅ {inviteMessage}
               </div>
             )}
 
-            {inviteLink && (
+            <input
               type="email"
               placeholder="Enter email address"
               value={inviteEmail}
