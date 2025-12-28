@@ -140,6 +140,8 @@ export default function BoardDetail() {
     }
   };
 
+  const isOwner = user && board?.owner && String(board.owner._id || board.owner) === String(user._id);
+
   const handleLeaveBoard = async () => {
     if (window.confirm(`Are you sure you want to leave "${board.title}"?`)) {
       const result = await leaveBoard(board._id);
@@ -229,6 +231,21 @@ export default function BoardDetail() {
 
         <div className="flex gap-3 items-center">
           <BoardMembers board={board} />
+          {isOwner ? (
+            <button
+              onClick={handleDeleteBoard}
+              className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Delete Board
+            </button>
+          ) : (
+            <button
+              onClick={handleLeaveBoard}
+              className="px-3 py-2 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+            >
+              Leave Board
+            </button>
+          )}
         </div>
       </header>
 

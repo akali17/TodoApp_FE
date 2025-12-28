@@ -2,7 +2,7 @@ import { useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/useAuthStore";
 
-export default function BoardModal({ board, onClose, onUpdate, onLeft }) {
+export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted }) {
   const [formData, setFormData] = useState({
     title: board?.title || "",
     description: board?.description || "",
@@ -67,6 +67,26 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft }) {
     }
   };
 
+  const handleDeleteBoard = async () => {
+    if (!isOwner) return;
+    const confirm = window.confirm(
+      `Delete board "${board.title}"? This action cannot be undone.`
+    );
+    if (!confirm) return;
+
+    try {
+      setLoading(true);
+      await axiosClient.delete(`/boards/${board._id}`);
+      if (typeof onDeleted === "function") onDeleted(board._id);
+      onClose();
+    } catch (err) {
+      console.error("Delete board error:", err);
+      alert(err.response?.data?.message || "Failed to delete board");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[450px] rounded-lg shadow-lg p-6 relative">
@@ -103,31 +123,45 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft }) {
 
         {/* BUTTONS */}
         <div className="flex gap-2 justify-between items-center">
-          {/* Member action: Leave Board */}
-          {user && !isOwner && (
-            <button
-              onClick={handleLeaveBoard}
-              className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
-              disabled={loading}
-              title="Leave this board"
-            >
-              Leave Board
-            </button>
-          )}
+          <div className="flex gap-2">
+            {user && !isOwner && (
+              <button
+                onClick={handleLeaveBoard}
+                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+                disabled={loading}
+                title="Leave this board"
+              >
+                Leave Board
+              </button>
+            )}
 
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleUpdate}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {loading ? "Saving..." : "Save"}
-          </button>
+            {user && isOwner && (
+              <button
+                onClick={handleDeleteBoard}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                disabled={loading}
+                title="Delete this board"
+              >
+                Delete Board
+              </button>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdate}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              {loading ? "Saving..." : "Save"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
