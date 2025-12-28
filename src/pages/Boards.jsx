@@ -107,9 +107,6 @@ export default function Boards() {
             onUpdate={(updatedBoard) => {
               setBoards(boards.map(b => b._id === updatedBoard._id ? updatedBoard : b));
             }}
-            onDeleted={(deletedId) => {
-              setBoards(boards.filter(b => b._id !== deletedId));
-            }}
             onLeft={(leftId) => {
               setBoards(boards.filter(b => b._id !== leftId));
             }}

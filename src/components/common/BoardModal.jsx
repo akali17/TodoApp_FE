@@ -2,7 +2,7 @@ import { useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/useAuthStore";
 
-export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft }) {
+export default function BoardModal({ board, onClose, onUpdate, onLeft }) {
   const [formData, setFormData] = useState({
     title: board?.title || "",
     description: board?.description || "",
@@ -45,23 +45,6 @@ export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft
     } catch (err) {
       console.error("Update board error:", err);
       alert(err.response?.data?.message || "Failed to update board");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteBoard = async () => {
-    if (!user || !isOwner) return;
-    const confirm = window.confirm(`Delete board "${board.title}"? This action cannot be undone.`);
-    if (!confirm) return;
-    try {
-      setLoading(true);
-      await axiosClient.delete(`/boards/${board._id}`);
-      if (typeof onDeleted === "function") onDeleted(board._id);
-      onClose();
-    } catch (err) {
-      console.error("Delete board error:", err);
-      alert(err.response?.data?.message || "Failed to delete board");
     } finally {
       setLoading(false);
     }
@@ -120,28 +103,17 @@ export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft
 
         {/* BUTTONS */}
         <div className="flex gap-2 justify-between items-center">
-          {/* Danger actions */}
-          <div className="flex gap-2">
-            {user && isOwner ? (
-              <button
-                onClick={handleDeleteBoard}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                disabled={loading}
-                title="Delete this board (owner only)"
-              >
-                Delete Board
-              </button>
-            ) : (
-              <button
-                onClick={handleLeaveBoard}
-                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
-                disabled={loading}
-                title="Leave this board"
-              >
-                Leave Board
-              </button>
-            )}
-          </div>
+          {/* Member action: Leave Board */}
+          {user && !isOwner && (
+            <button
+              onClick={handleLeaveBoard}
+              className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+              disabled={loading}
+              title="Leave this board"
+            >
+              Leave Board
+            </button>
+          )}
 
           <button
             onClick={onClose}
