@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { getSocket, waitForSocket } from "../socket";
@@ -16,6 +16,7 @@ export default function BoardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const hasShownError = useRef(false);
 
   const {
     board,
@@ -37,8 +38,9 @@ export default function BoardDetail() {
   const loadBoard = async () => {
     const result = await getFullBoard(id);
     
-    // Handle access denied
-    if (!result.success && result.status === 403) {
+    // Handle access denied - only show once
+    if (!result.success && result.status === 403 && !hasShownError.current) {
+      hasShownError.current = true;
       showToast("You don't have access to this board", 'error', 4000);
       setTimeout(() => {
         navigate("/boards");
