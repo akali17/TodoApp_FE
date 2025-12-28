@@ -9,7 +9,6 @@ export default function BoardMembers({ board }) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [invitingEmail, setInvitingEmail] = useState(false);
   const [inviteMessage, setInviteMessage] = useState("");
-  const [inviteLink, setInviteLink] = useState("");
 
   // Use useAuthStore hook to get user (will update when user changes)
   let user = useAuthStore((state) => state.user);
@@ -43,17 +42,11 @@ export default function BoardMembers({ board }) {
         email: inviteEmail 
       });
       setInviteMessage(res.data.message || "Invite sent!");
-      if (res.data.inviteLink) {
-        setInviteLink(res.data.inviteLink);
-      }
       setInviteEmail("");
-      // Don't auto-close if there's a link to show
-      if (!res.data.inviteLink) {
-        setTimeout(() => {
-          setInviteMessage("");
-          setInviteOpen(false);
-        }, 2000);
-      }
+      setTimeout(() => {
+        setInviteMessage("");
+        setInviteOpen(false);
+      }, 2000);
     } catch (err) {
       console.error("Invite error:", err);
       alert(err.response?.data?.message || "Failed to send invite");
@@ -180,8 +173,7 @@ export default function BoardMembers({ board }) {
               ✕
             </button>
 
-            <h2 className="text-lg font-semibold mb-4">Invite Member</h2>
-
+            <h
             {inviteMessage && (
               <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded mb-4">
                 ✅ {inviteMessage}
@@ -189,30 +181,6 @@ export default function BoardMembers({ board }) {
             )}
 
             {inviteLink && (
-              <div className="bg-blue-50 border border-blue-200 px-4 py-3 rounded mb-4">
-                <p className="text-sm text-gray-700 mb-2">Invite Link:</p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={inviteLink}
-                    readOnly
-                    className="flex-1 text-xs p-2 border rounded bg-white"
-                  />
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(inviteLink);
-                      alert("Link copied!");
-                    }}
-                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                  >
-                    Copy
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Share this link if email delivery fails</p>
-              </div>
-            )}
-
-            <input
               type="email"
               placeholder="Enter email address"
               value={inviteEmail}
