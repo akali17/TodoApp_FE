@@ -26,7 +26,15 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted
     ? board.owner._id
     : board?.owner;
 
-  const isOwner = currentUserId && ownerId && String(ownerId) === String(currentUserId);
+  const isOwner = currentUserId && ownerId && String(ownerId).trim() === String(currentUserId).trim();
+
+  // Debug: log owner detection
+  console.log("🔍 BoardModal owner check:", {
+    currentUserId,
+    ownerId,
+    isOwner,
+    boardOwnerObj: board?.owner,
+  });
 
   const handleUpdate = async () => {
     if (!formData.title.trim()) {
