@@ -49,8 +49,10 @@ export const useBoardStore = create((set, get) => ({
 
     // Cleanup old listeners
     socket.off("board:titleUpdated");
+    socket.off("board:deleted");
     socket.off("member:removed");
     socket.off("member:joined");
+    socket.off("member:left");
     socket.off("user:joined");
     socket.off("user:left");
     socket.off("card:updated");
@@ -72,8 +74,28 @@ export const useBoardStore = create((set, get) => ({
       }));
     });
 
+    socket.on("board:deleted", ({ boardId, message }) => {
+      console.log("🔥 SOCKET board:deleted", boardId);
+      // Board was deleted - will be handled by component to redirect
+      set({ board: null });
+    });
+
     socket.on("member:removed", ({ boardId, userId, removedBy }) => {
       console.log("🔥 SOCKET member:removed", { boardId, userId, removedBy });
+      set((state) => {
+        // Remove member from board.members array
+        const updatedBoard = {
+          ...state.board,
+          members: state.board.members.filter(
+            (m) => String(m._id) !== String(userId)
+          ),
+        };
+        return { board: updatedBoard };
+      });
+    });
+
+    socket.on("member:left", ({ boardId, userId, username }) => {
+      console.log("🔥 SOCKET member:left", { boardId, userId, username });
       set((state) => {
         // Remove member from board.members array
         const updatedBoard = {
@@ -363,4 +385,26 @@ export const useBoardStore = create((set, get) => ({
     }
   },
 
-}));
+  /* =====================================================
+      BOARD ACTIONS (Delete, Leave)
+  ====================================================== */
+  deleteBoard: async (boardId) => {
+    try {
+      await axiosClient.delete(`/boards/${boardId}`);
+      return { success: true };
+    } catch (err) {
+      console.error("DELETE BOARD ERROR:", err);
+      return { success: false, message: err.response?.data?.message || err.message };
+    }
+  },
+
+  leaveBoard: async (boardId) => {
+    try {
+      await axiosClient.post(`/boards/${boardId}/leave`);
+      return { success: true };
+    } catch (err) {
+      console.error("LEAVE BOARD ERROR:", err);
+      return { success: false, message: err.response?.data?.message || err.message };
+    }
+  },
+

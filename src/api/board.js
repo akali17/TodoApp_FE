@@ -12,3 +12,12 @@ export const createBoardApi = (title, description, token) =>
     { title, description },
     { headers: { Authorization: `Bearer ${token}` } }
   );
+export const deleteBoardApi = (boardId, token) =>
+  axios.delete(`${BASE_URL}/${boardId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+export const leaveBoardApi = (boardId, token) =>
+  axios.post(`${BASE_URL}/${boardId}/leave`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });

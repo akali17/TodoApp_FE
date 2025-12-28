@@ -29,6 +29,8 @@ export default function BoardDetail() {
     moveCard,
     reorderCardsInColumn,
     updateBoardTitle,
+    deleteBoard,
+    leaveBoard,
   } = useBoardStore();
 
   const [editingTitle, setEditingTitle] = useState(false);
@@ -65,6 +67,16 @@ export default function BoardDetail() {
     
     // Initialize socket listeners
     useBoardStore.getState().initBoardSocket(socket);
+
+    // Listen for board deletion
+    const handleBoardDeleted = ({ boardId, message }) => {
+      showToast("This board has been deleted", 'warning', 4000);
+      setTimeout(() => {
+        navigate("/boards");
+      }, 1500);
+    };
+
+    socket.on("board:deleted", handleBoardDeleted);
 
     // Listen for being removed from board
     const handleMemberRemoved = ({ userId, boardId }) => {
@@ -114,6 +126,30 @@ export default function BoardDetail() {
 
     await updateBoardTitle(board._id, title);
     setEditingTitle(false);
+  };
+
+  const handleDeleteBoard = async () => {
+    if (window.confirm(`Are you sure you want to delete board "${board.title}"? This action cannot be undone.`)) {
+      const result = await deleteBoard(board._id);
+      if (result.success) {
+        showToast("Board deleted successfully", 'success', 3000);
+        navigate("/boards");
+      } else {
+        showToast(result.message || "Failed to delete board", 'error', 4000);
+      }
+    }
+  };
+
+  const handleLeaveBoard = async () => {
+    if (window.confirm(`Are you sure you want to leave "${board.title}"?`)) {
+      const result = await leaveBoard(board._id);
+      if (result.success) {
+        showToast("You have left the board", 'info', 3000);
+        navigate("/boards");
+      } else {
+        showToast(result.message || "Failed to leave board", 'error', 4000);
+      }
+    }
   };
 
   const handleDragEnd = (result) => {
@@ -191,7 +227,31 @@ export default function BoardDetail() {
           />
         )}
 
-        <BoardMembers board={board} />
+        <div className="flex gap-3 items-center">
+          <BoardMembers board={board} />
+          
+          {/* Delete Board Button (Owner Only) */}
+          {user && board.owner._id === user._id && (
+            <button
+              onClick={handleDeleteBoard}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition"
+              title="Delete this board (owner only)"
+            >
+              Delete Board
+            </button>
+          )}
+          
+          {/* Leave Board Button (Members) */}
+          {user && board.owner._id !== user._id && (
+            <button
+              onClick={handleLeaveBoard}
+              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition"
+              title="Leave this board"
+            >
+              Leave Board
+            </button>
+          )}
+        </div>
       </header>
 
       {/* BODY */}
