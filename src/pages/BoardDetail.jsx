@@ -36,6 +36,21 @@ export default function BoardDetail() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState("");
 
+  // Fallback user from localStorage to avoid brief mis-detection on first render
+  const storedUser = (() => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const currentUserId = user?._id || storedUser?._id;
+  const ownerId = board?.owner?._id || board?.owner;
+  const isOwner = currentUserId && ownerId && String(ownerId) === String(currentUserId);
+  const isMember = currentUserId && board?.members?.some(m => String(m._id || m) === String(currentUserId));
+
  useEffect(() => {
   const loadBoard = async () => {
     const result = await getFullBoard(id);
@@ -129,6 +144,8 @@ export default function BoardDetail() {
   };
 
   const handleDeleteBoard = async () => {
+    if (!isOwner) return;
+
     if (window.confirm(`Are you sure you want to delete board "${board.title}"? This action cannot be undone.`)) {
       const result = await deleteBoard(board._id);
       if (result.success) {
@@ -140,9 +157,9 @@ export default function BoardDetail() {
     }
   };
 
-  const isOwner = user && board?.owner && String(board.owner._id || board.owner) === String(user._id);
-
   const handleLeaveBoard = async () => {
+    if (!isMember || isOwner) return;
+
     if (window.confirm(`Are you sure you want to leave "${board.title}"?`)) {
       const result = await leaveBoard(board._id);
       if (result.success) {
@@ -238,14 +255,14 @@ export default function BoardDetail() {
             >
               Delete Board
             </button>
-          ) : (
+          ) : isMember ? (
             <button
               onClick={handleLeaveBoard}
               className="px-3 py-2 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
             >
               Leave Board
             </button>
-          )}
+          ) : null}
         </div>
       </header>
 

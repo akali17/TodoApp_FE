@@ -138,6 +138,9 @@ export default function Boards() {
             onLeft={(leftId) => {
               setBoards(boards.filter(b => b._id !== leftId));
             }}
+            onDeleted={(deletedId) => {
+              setBoards(boards.filter(b => b._id !== deletedId));
+            }}
           />
         )}
     </PageContainer>
