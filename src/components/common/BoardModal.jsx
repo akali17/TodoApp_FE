@@ -10,8 +10,8 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted
   const [loading, setLoading] = useState(false);
   const { user } = useAuthStore();
 
-  // Determine ownership whether `board.owner` is an id or populated object
-  // Fallback to localStorage if store hasn't loaded the user yet
+  // Get current user ID from store or localStorage fallback
+  const storeUser = useAuthStore.getState().user;
   const storedUser = (() => {
     try {
       const raw = localStorage.getItem("user");
@@ -21,7 +21,7 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted
     }
   })();
 
-  const currentUserId = user?._id || storedUser?._id || null;
+  const currentUserId = storeUser?._id || storedUser?._id || null;
   const ownerId = (board?.owner && typeof board.owner === "object" && board.owner._id)
     ? board.owner._id
     : board?.owner;
@@ -34,6 +34,8 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted
     ownerId,
     isOwner,
     boardOwnerObj: board?.owner,
+    storeUser: user,
+    storedUser,
   });
 
   const handleUpdate = async () => {
