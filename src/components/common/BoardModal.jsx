@@ -11,16 +11,22 @@ export default function BoardModal({ board, onClose, onUpdate, onDeleted, onLeft
   const { user } = useAuthStore();
 
   // Determine ownership whether `board.owner` is an id or populated object
-  const isOwner = (() => {
+  // Fallback to localStorage if store hasn't loaded the user yet
+  const storedUser = (() => {
     try {
-      if (board?.owner && typeof board.owner === "object" && board.owner._id) {
-        return String(board.owner._id) === String(user?._id);
-      }
-      return String(board?.owner) === String(user?._id);
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
     } catch {
-      return false;
+      return null;
     }
   })();
+
+  const currentUserId = user?._id || storedUser?._id || null;
+  const ownerId = (board?.owner && typeof board.owner === "object" && board.owner._id)
+    ? board.owner._id
+    : board?.owner;
+
+  const isOwner = currentUserId && ownerId && String(ownerId) === String(currentUserId);
 
   const handleUpdate = async () => {
     if (!formData.title.trim()) {
