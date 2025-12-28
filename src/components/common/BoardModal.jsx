@@ -143,16 +143,19 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted
               </button>
             )}
 
-            {user && isOwner && (
-              <button
-                onClick={handleDeleteBoard}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                disabled={loading}
-                title="Delete this board"
-              >
-                Delete Board
-              </button>
-            )}
+            {/* Delete Board - visible to all, but only owner can use */}
+            <button
+              onClick={handleDeleteBoard}
+              disabled={loading || !isOwner}
+              className={`px-4 py-2 text-white rounded ${
+                isOwner
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              title={isOwner ? "Delete this board" : "Only owner can delete"}
+            >
+              Delete Board
+            </button>
           </div>
 
           <div className="flex gap-2">
