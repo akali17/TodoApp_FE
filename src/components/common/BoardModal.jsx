@@ -10,8 +10,8 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted
   const [loading, setLoading] = useState(false);
   const { user } = useAuthStore();
 
-  // Extract current user ID
-  const currentUserId = user?._id;
+  // Extract current user ID - note: user has 'id' not '_id'
+  const currentUserId = user?.id;
   const ownerId = (board?.owner && typeof board.owner === "object" && board.owner._id)
     ? board.owner._id
     : board?.owner;
