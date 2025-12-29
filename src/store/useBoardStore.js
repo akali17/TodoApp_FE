@@ -109,19 +109,34 @@ export const useBoardStore = create((set, get) => ({
     });
 
     socket.on("member:joined", ({ boardId, userId, username, email }) => {
-      console.log("🔥 SOCKET member:joined", { boardId, userId, username });
-      set((state) => {
-        // Add new member to board if not already there
-        const alreadyExists = state.board.members.some(
-          (m) => String(m._id) === String(userId)
-        );
-        if (alreadyExists) return { board: state.board };
-        
-        const updatedBoard = {
-          ...state.board,
-          members: [...state.board.members, { _id: userId, username, email }],
-        };
-        return { board: updatedBoard };
+      console.log("🔥 SOCKET member:joined", { boardId, userId, username, email });
+      
+      const currentState = get();
+      
+      // Check if board exists
+      if (!currentState.board) {
+        console.warn("Board not loaded yet, ignoring member:joined");
+        return;
+      }
+      
+      // Add new member to board if not already there
+      const alreadyExists = currentState.board.members.some(
+        (m) => String(m._id) === String(userId)
+      );
+      
+      if (alreadyExists) {
+        console.log("Member already exists in board");
+        return;
+      }
+      
+      console.log("✅ Adding new member to board:", username);
+      
+      // Create completely new board object with new members array
+      set({
+        board: {
+          ...currentState.board,
+          members: [...currentState.board.members, { _id: userId, username, email }],
+        }
       });
     });
 
