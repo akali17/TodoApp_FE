@@ -77,8 +77,8 @@ export default function BoardDetail() {
       return;
     }
 
-    console.log("✅ Socket ready - Joining board room:", `board:${id}`);
-    socket.emit("join-board", `board:${id}`);
+    console.log("✅ Socket ready - Joining board room:", id);
+    socket.emit("join-board", id);
     
     // Initialize socket listeners
     useBoardStore.getState().initBoardSocket(socket);
@@ -119,8 +119,8 @@ export default function BoardDetail() {
   return () => {
     const socket = getSocket();
     if (socket && socket.connected) {
-      console.log("🔌 Leaving board room:", `board:${id}`);
-      socket.emit("leave-board", `board:${id}`);
+      console.log("🔌 Leaving board room:", id);
+      socket.emit("leave-board", id);
     }
   };
 }, [id, getFullBoard, user, board?.title, navigate]);
