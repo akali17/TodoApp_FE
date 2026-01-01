@@ -1,4 +1,3 @@
-import axios from "axios";
 import axiosClient from "./axiosClient";
 
 const API = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/users`;
@@ -13,4 +12,4 @@ export const getUserInfoApi = () =>
   axiosClient.get(`${API}/me`);
 
 export const googleLoginApi = (token) =>
-  axios.post(`${API}/google-login`, { token });
+  axiosClient.post(`${API}/google-login`, { token });

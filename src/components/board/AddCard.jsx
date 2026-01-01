@@ -1,5 +1,4 @@
 import { useState } from "react";
-import axiosClient from "../../api/axiosClient";
 import { useBoardStore } from "../../store/useBoardStore";
 
 export default function AddCard({ columnId }) {
