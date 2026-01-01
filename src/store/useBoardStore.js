@@ -68,20 +68,17 @@ export const useBoardStore = create((set, get) => ({
 
     // ====== BOARD EVENTS ======
     socket.on("board:titleUpdated", ({ title }) => {
-      console.log("🔥 SOCKET board:titleUpdated", title);
       set((state) => ({
         board: { ...state.board, title },
       }));
     });
 
-    socket.on("board:deleted", ({ boardId, message }) => {
-      console.log("🔥 SOCKET board:deleted", boardId);
+    socket.on("board:deleted", () => {
       // Board was deleted - will be handled by component to redirect
       set({ board: null });
     });
 
-    socket.on("member:removed", ({ boardId, userId, removedBy }) => {
-      console.log("🔥 SOCKET member:removed", { boardId, userId, removedBy });
+    socket.on("member:removed", ({ userId }) => {
       set((state) => {
         // Remove member from board.members array
         const updatedBoard = {
@@ -94,8 +91,7 @@ export const useBoardStore = create((set, get) => ({
       });
     });
 
-    socket.on("member:left", ({ boardId, userId, username }) => {
-      console.log("🔥 SOCKET member:left", { boardId, userId, username });
+    socket.on("member:left", ({ userId }) => {
       set((state) => {
         // Remove member from board.members array
         const updatedBoard = {
@@ -108,8 +104,7 @@ export const useBoardStore = create((set, get) => ({
       });
     });
 
-    socket.on("member:joined", ({ boardId, userId, username, email }) => {
-      console.log("🔥 SOCKET member:joined", { boardId, userId, username });
+    socket.on("member:joined", ({ userId, username, email }) => {
       set((state) => {
         // Add new member to board if not already there
         const alreadyExists = state.board.members.some(
@@ -125,26 +120,22 @@ export const useBoardStore = create((set, get) => ({
       });
     });
 
-    socket.on("user:joined", ({ userId, onlineUsers }) => {
-      console.log("🔥 SOCKET user:joined", { userId, onlineUsers });
+    socket.on("user:joined", () => {
       // Update online users list (handled by useOnlineUsers hook)
     });
 
-    socket.on("user:left", ({ userId, onlineUsers }) => {
-      console.log("🔥 SOCKET user:left", { userId, onlineUsers });
+    socket.on("user:left", () => {
       // Update online users list (handled by useOnlineUsers hook)
     });
 
     // ====== CARD EVENTS ======
     socket.on("card:created", ({ card }) => {
-      console.log("🔥 SOCKET card:created", card);
       set((state) => ({
         cards: [...state.cards, card],
       }));
     });
 
     socket.on("card:updated", ({ card }) => {
-      console.log("🔥 SOCKET card:updated", card);
       set((state) => ({
         cards: state.cards.map((c) =>
           String(c._id) === String(card._id) ? card : c
@@ -153,14 +144,12 @@ export const useBoardStore = create((set, get) => ({
     });
 
     socket.on("card:deleted", ({ cardId }) => {
-      console.log("🔥 SOCKET card:deleted", cardId);
       set((state) => ({
         cards: state.cards.filter((c) => String(c._id) !== String(cardId)),
       }));
     });
 
     socket.on("card:moved", ({ card }) => {
-      console.log("🔥 SOCKET card:moved", card);
       set((state) => ({
         cards: state.cards.map((c) =>
           String(c._id) === String(card._id) ? card : c
@@ -170,14 +159,12 @@ export const useBoardStore = create((set, get) => ({
 
     // ====== COLUMN EVENTS ======
     socket.on("column:created", ({ column }) => {
-      console.log("🔥 SOCKET column:created", column);
       set((state) => ({
         columns: [...state.columns, column],
       }));
     });
 
     socket.on("column:updated", ({ column }) => {
-      console.log("🔥 SOCKET column:updated", column);
       set((state) => ({
         columns: state.columns.map((c) =>
           String(c._id) === String(column._id) ? column : c
@@ -186,21 +173,18 @@ export const useBoardStore = create((set, get) => ({
     });
 
     socket.on("column:deleted", ({ columnId }) => {
-      console.log("🔥 SOCKET column:deleted", columnId);
       set((state) => ({
         columns: state.columns.filter((c) => String(c._id) !== String(columnId)),
         // Also remove cards from deleted column
         cards: state.cards.filter((c) => String(c.column) !== String(columnId)),
       }));
-    });
-
+    })
     socket.on("columns:reordered", ({ reorderedColumnIds }) => {
       console.log("🔥 SOCKET columns:reordered", reorderedColumnIds);
       set((state) => {
         const columnMap = new Map(state.columns.map(c => [String(c._id), c]));
         const reorderedColumns = reorderedColumnIds
           .map(id => columnMap.get(String(id)))
-          .filter(Boolean);
         return { columns: reorderedColumns };
       });
     });
@@ -216,7 +200,6 @@ export const useBoardStore = create((set, get) => ({
     });
 
     socket.on("activity:updated", ({ activity }) => {
-      console.log("🔥 SOCKET activity:updated", activity);
       set({
         activity: activity || []
       });
@@ -295,7 +278,6 @@ export const useBoardStore = create((set, get) => ({
             toColumn,
             newOrder
           });
-          console.log("✅ Card moved successfully");
         } catch (err) {
           // Rollback on error
           set((s) => ({

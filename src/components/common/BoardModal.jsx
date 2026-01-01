@@ -18,15 +18,6 @@ export default function BoardModal({ board, onClose, onUpdate, onLeft, onDeleted
 
   const isOwner = currentUserId && ownerId && String(ownerId).trim() === String(currentUserId).trim();
 
-  // Debug: log owner detection
-  console.log("🔍 BoardModal owner check:", {
-    user,
-    currentUserId,
-    ownerId,
-    isOwner,
-    boardOwnerObj: board?.owner,
-  });
-
   const handleUpdate = async () => {
     if (!formData.title.trim()) {
       alert("Title is required");
