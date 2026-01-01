@@ -178,19 +178,19 @@ export const useBoardStore = create((set, get) => ({
         // Also remove cards from deleted column
         cards: state.cards.filter((c) => String(c.column) !== String(columnId)),
       }));
-    })
+    });
+
     socket.on("columns:reordered", ({ reorderedColumnIds }) => {
-      console.log("🔥 SOCKET columns:reordered", reorderedColumnIds);
       set((state) => {
         const columnMap = new Map(state.columns.map(c => [String(c._id), c]));
         const reorderedColumns = reorderedColumnIds
           .map(id => columnMap.get(String(id)))
+          .filter(Boolean);
         return { columns: reorderedColumns };
       });
     });
 
-    socket.on("cards:reordered", ({ columnId, cards }) => {
-      console.log("🔥 SOCKET cards:reordered", { columnId, cards });
+    socket.on("cards:reordered", ({ cards }) => {
       set((state) => ({
         cards: state.cards.map(c => {
           const updated = cards.find(card => String(card._id) === String(c._id));

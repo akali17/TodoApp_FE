@@ -10,7 +10,6 @@ export default function useOnlineUsers() {
     if (!socket) return;
 
     const handleOnlineUsers = (users) => {
-      console.log("📡 Received online-users:", users);
       setOnlineUsers(users); // Update global store
     };
 

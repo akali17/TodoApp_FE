@@ -77,7 +77,6 @@ export default function BoardDetail() {
       return;
     }
 
-    console.log("✅ Socket ready - Joining board room:", id);
     socket.emit("join-board", id);
     
     // Initialize socket listeners
@@ -119,7 +118,6 @@ export default function BoardDetail() {
   return () => {
     const socket = getSocket();
     if (socket && socket.connected) {
-      console.log("🔌 Leaving board room:", id);
       socket.emit("leave-board", id);
     }
   };
