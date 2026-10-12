@@ -1,20 +1,52 @@
-# React + Vite
+# WWW — Real-time Collaborative Task Board
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A multi-user task management app (Trello-style) where board changes sync to every member in real time.
 
-Currently, two official plugins are available:
+**Live demo:** https://wwwproject-xi.vercel.app
+**Backend repo:** https://github.com/akali17/TodoApp_BE
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Demo account
 
-## React Compiler
+| Email | Password |
+| --- | --- |
+| demo@test.com | 123456 |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+> The backend runs on Render's free tier. The first request after a period of inactivity can take ~50 seconds while the server wakes up.
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Create boards, columns and cards; drag and drop cards between columns
+- Real-time collaboration with Socket.IO: changes and online members appear instantly for everyone on the board
+- Invite members to a board by email
+- Calendar view of card deadlines, activity log and statistics page
+- Sign up / sign in with email + password or Google OAuth
+- Email verification and password reset
 
-## This is demo account for this project
-   Demo account: demo@test.com / Password:123456
-   Note: backend on Render free tier, first request may take ~50s to wake up.
+## Tech stack
+
+**Frontend:** React 19, Vite, React Router, Zustand, Tailwind CSS, @dnd-kit, Socket.IO client, Axios
+**Backend:** Node.js, Express, MongoDB (Mongoose), Socket.IO, JWT, Google OAuth, bcrypt, node-cron, Brevo (email)
+**Deployment:** Vercel (frontend), Render (backend), MongoDB Atlas (database)
+
+## Run locally
+
+```bash
+git clone https://github.com/akali17/TodoApp_FE.git
+cd TodoApp_FE
+npm install
+npm run dev
+```
+
+Create a `.env` file in the project root:
+
+```
+VITE_API_URL=http://localhost:5000
+VITE_SOCKET_URL=http://localhost:5000
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+Then start the backend (see the backend repo) and open http://localhost:5173.
+
+## Author
+
+Hoàng Gia Bảo — [github.com/akali17](https://github.com/akali17)
