@@ -24,7 +24,7 @@ A multi-user task management app (Trello-style) where board changes sync to ever
 
 ## Tech stack
 
-**Frontend:** React 19, Vite, React Router, Zustand, Tailwind CSS, @dnd-kit, Socket.IO client, Axios
+**Frontend:** React 19, Vite, React Router, Zustand, Tailwind CSS, @hello-pangea/dnd, react-calendar, Socket.IO client, Axios
 **Backend:** Node.js, Express, MongoDB (Mongoose), Socket.IO, JWT, Google OAuth, bcrypt, node-cron, Brevo (email)
 **Deployment:** Vercel (frontend), Render (backend), MongoDB Atlas (database)
 
@@ -40,7 +40,7 @@ npm run dev
 Create a `.env` file in the project root:
 
 ```
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http://localhost:5000/api
 VITE_SOCKET_URL=http://localhost:5000
 VITE_GOOGLE_CLIENT_ID=your_google_client_id
 ```
